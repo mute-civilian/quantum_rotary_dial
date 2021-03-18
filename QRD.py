@@ -16,8 +16,8 @@ logging.basicConfig(
 )
 
 # to read the serial data from terminal: screen /dev/cu.usbserial-AM00GQIK 9600
-ser = serial.Serial(QRD_config.serial_port, QRD_config.baud_rate, timeout=None)  # open serial port
-logging.info("Listening on %s", ser.name)  # check which port was really used
+ser = serial.Serial(QRD_config.serial_port, QRD_config.baud_rate, timeout=None)
+logging.info("Listening on %s", ser.name)
 keyboard = Controller()
 
 alphas = {
