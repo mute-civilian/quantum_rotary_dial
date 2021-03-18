@@ -4,10 +4,10 @@ import os
 from pynput.keyboard import Key, Controller
 import serial
 
-import QRD_config
+import config
 
 logging.basicConfig(
-    filename=QRD_config.log_file,
+    filename=config.log_file,
     filemode="w",
     encoding="utf-8",
     level=logging.INFO,
@@ -16,7 +16,7 @@ logging.basicConfig(
 )
 
 # to read the serial data from terminal: screen /dev/cu.usbserial-AM00GQIK 9600
-ser = serial.Serial(QRD_config.serial_port, QRD_config.baud_rate, timeout=None)
+ser = serial.Serial(config.serial_port, config.baud_rate, timeout=None)
 logging.info("Listening on %s", ser.name)
 keyboard = Controller()
 
@@ -139,7 +139,7 @@ def send_shifted_key(mode, key):
 def main():
     capslock = False
     shift = False
-    mode = mode_list.index(QRD_config.default_mode)
+    mode = mode_list.index(config.default_mode)
 
     while True:
         output = ""
@@ -174,11 +174,11 @@ def main():
         elif mode == mode_list.index("alpha_mode"):
             output = alpha(rotary_dial_number)
         elif mode == mode_list.index("phrases_mode") and rotary_dial_number <= len(
-            QRD_config.phrases
+            config.phrases
         ):
-            output = QRD_config.phrases[rotary_dial_number - 1]
-        elif mode == mode_list.index("apps_mode") and rotary_dial_number <= len(QRD_config.apps):
-            os.system(f"open -a '{QRD_config.apps[rotary_dial_number - 1]}'")
+            output = config.phrases[rotary_dial_number - 1]
+        elif mode == mode_list.index("apps_mode") and rotary_dial_number <= len(config.apps):
+            os.system(f"open -a '{config.apps[rotary_dial_number - 1]}'")
             output = ""
         elif mode == mode_list.index("alfred_mode"):
             output = alfred(rotary_dial_number)
