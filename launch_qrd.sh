@@ -1,2 +1,2 @@
 #!/bin/bash
-python /Users/nathan.cooke/quantum_rotary_dial/QRD.py &
+nohup python3 /Users/nathan.cooke/quantum_rotary_dial/QRD.py &
