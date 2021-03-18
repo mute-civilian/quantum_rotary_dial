@@ -46,11 +46,23 @@ alphas = {
     80: "t",
     81: "u",
     82: "v",
-    90: "x",
-    91: "y",
-    92: "z",
+    90: "w",
+    91: "x",
+    92: "y",
 }
-shifted_num = {'1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')'}
+
+shifted_num = {
+    "1": "!",
+    "2": "@",
+    "3": "#",
+    "4": "$",
+    "5": "%",
+    "6": "^",
+    "7": "&",
+    "8": "*",
+    "9": "(",
+    "0": ")",
+}
 
 mode_list = [
     "operation_mode",
@@ -91,26 +103,20 @@ def backspace(num):
 
 
 def get_code(num):
-    logging.debug("Getting 3 char code")
+    logging.debug("Getting code")
     code = str(num)
-    while len(code) < 3:
-        code += str(read_port())
+    add = read_port()
+    while add is not mode_list.index("operation_mode"):
+        code += str(add)
     logging.info("Code is %s", code)
     return code
 
 
 def alfred(num):
     code = get_code(num)
-    if code == "293":  # bye
-        logging.debug("Going to send Alfred hotkey for bye")
-        return "b"  # alfred hotkey for bye workflow
-    elif code == "439":  # hey
-        logging.debug("Going to send Alfred hotkey for hi")
-        return "h"  # alfred hotkey for hi workflow
-    elif code == "328":  # eat
-        logging.debug("Going to send Alfred hotkey for lunch")
-        return "l"  # alfred hotkey for lunch workflow
-    else:
+    try:
+        return config.alfred_codes[code]
+    except KeyError:
         logging.warning("Code %s is not valid, returning blank string")
         return ""
 
@@ -128,7 +134,7 @@ def send_Alfred_Hotkey(key):
 def send_shifted_key(mode, key):
     logging.info('Sending shifted "%s" to keyboard', key)
     # NOTE: cannot shift numbers with this library, so pull from dictionary
-    if mode == mode_list.index('numpad_mode'):
+    if mode == mode_list.index("numpad_mode"):
         keyboard.type(shifted_num[key])
     else:
         with keyboard.pressed(Key.shift):
@@ -177,7 +183,9 @@ def main():
             config.phrases
         ):
             output = config.phrases[rotary_dial_number - 1]
-        elif mode == mode_list.index("apps_mode") and rotary_dial_number <= len(config.apps):
+        elif mode == mode_list.index("apps_mode") and rotary_dial_number <= len(
+            config.apps
+        ):
             os.system(f"open -a '{config.apps[rotary_dial_number - 1]}'")
             output = ""
         elif mode == mode_list.index("alfred_mode"):
