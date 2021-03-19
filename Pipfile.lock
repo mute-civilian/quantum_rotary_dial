@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "de8708c3c1d1a5e782030170cf39d2a1f980865c9afdd0b8b74ddbcbc760b5cb"
+            "sha256": "d7e4044b8077fb287e4bdb81a9092a4b2b93965d0401250d29b23c3dccd15543"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -60,6 +60,14 @@
             ],
             "markers": "sys_platform == 'darwin'",
             "version": "==7.1"
+        },
+        "rumps": {
+            "hashes": [
+                "sha256:c8df19347c661cac8906fffd410727c6000f978a6c8c44a2803a1786b35c4c1f",
+                "sha256:e5ea41ce62312a0f1fa4280fc587bd8b5c6ff7ed0be219752c95f013109d148a"
+            ],
+            "index": "pypi",
+            "version": "==0.3.0"
         },
         "six": {
             "hashes": [

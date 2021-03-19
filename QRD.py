@@ -1,8 +1,9 @@
 import logging
 import os
+import serial
 
 from pynput.keyboard import Key, Controller
-import serial
+import rumps
 
 import config
 
@@ -14,6 +15,8 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
+
+rumps.debug_mode(True)
 
 # to read the serial data from terminal: screen /dev/cu.usbserial-AM00GQIK 9600
 ser = serial.Serial(config.serial_port, config.baud_rate, timeout=None)
@@ -143,6 +146,7 @@ def send_shifted_key(mode, key):
 
 
 def main():
+    logging.info("I'm in main!")
     capslock = False
     shift = False
     mode = mode_list.index(config.default_mode)
@@ -153,7 +157,6 @@ def main():
         rotary_dial_number = read_port()
         logging.debug("Rotary Dial number is %s", rotary_dial_number)
 
-        # Because operation_mode is triggered by a number, you'll need to dial it twice to type that number. For instance, the operation_mode is triggered by 0 then to type "0", you have to dial "00"
         if rotary_dial_number == mode_list.index("operation_mode"):
             previous_mode = mode
             mode = read_port()
