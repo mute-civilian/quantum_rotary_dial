@@ -1,6 +1,7 @@
 import logging
 import os
 import serial
+from multiprocessing import Process, Value
 
 from pynput.keyboard import Key, Controller
 import rumps
@@ -11,16 +12,13 @@ logging.basicConfig(
     filename=config.log_file,
     filemode="w",
     encoding="utf-8",
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
 
-rumps.debug_mode(True)
+# rumps.debug_mode(True)
 
-# to read the serial data from terminal: screen /dev/cu.usbserial-AM00GQIK 9600
-ser = serial.Serial(config.serial_port, config.baud_rate, timeout=None)
-logging.info("Listening on %s", ser.name)
 keyboard = Controller()
 
 alphas = {
@@ -79,20 +77,56 @@ mode_list = [
     "backspace_mode",
 ]
 
+mode = Value("i", mode_list.index(config.default_mode))
+capslock = Value("b", False)
+shift = Value("b", False)
 
-def read_port():
+
+class QRDStatusBarApp(rumps.App):
+    def __init__(self):
+        self.config = {"app_name": "QRD", "interval": 1}
+        self.app = rumps.App(self.config["app_name"], quit_button=None)
+        self.timer = rumps.Timer(self.set_title, 1)
+        self.interval = self.config["interval"]
+        self.set_up_menu()
+        self.app.menu = []
+
+    def run(self):
+        logging.debug("Running statusbar app")
+        self.timer.start()
+        self.app.run()
+
+    def set_up_menu(self):
+        self.app.title = "QRD"
+
+    def set_title(self, sender):
+        new_title = "QRD: "
+        current_mode = mode_list[int(mode.value)]
+        shift_flag = "Shifted " if shift.value else ""
+        capslock_flag = "Capslocked " if capslock.value else ""
+
+        self.app.title = new_title + shift_flag + capslock_flag + current_mode
+
+
+@rumps.clicked("Quit")
+def clean_up_before_quit(_):
+    QRD_process.terminate()
+    rumps.quit_application()
+
+
+def read_port(ser):
     return int((str(ser.read())[2:3]))
 
 
-def alpha(num):
+def alpha(ser, num):
     letter_key = num * 10
     logging.debug("Base Alpha letter_key is %s", letter_key)
-    add = read_port()
+    add = read_port(ser)
 
     while add is not mode_list.index("operation_mode"):
         logging.debug("Adding this to letter_key: %s", add)
         letter_key += add
-        add = read_port()
+        add = read_port(ser)
 
     return alphas.get(letter_key, "")
 
@@ -105,18 +139,18 @@ def backspace(num):
         num -= 1
 
 
-def get_code(num):
-    logging.debug("Getting code")
+def get_code(ser, num):
+    logging.debug("getting code")
     code = str(num)
-    add = read_port()
+    add = read_port(ser)
     while add is not mode_list.index("operation_mode"):
         code += str(add)
     logging.info("Code is %s", code)
     return code
 
 
-def alfred(num):
-    code = get_code(num)
+def alfred(ser, num):
+    code = get_code(ser, num)
     try:
         return config.alfred_codes[code]
     except KeyError:
@@ -137,7 +171,7 @@ def send_Alfred_Hotkey(key):
 def send_shifted_key(mode, key):
     logging.info('Sending shifted "%s" to keyboard', key)
     # NOTE: cannot shift numbers with this library, so pull from dictionary
-    if mode == mode_list.index("numpad_mode"):
+    if mode.value == mode_list.index("numpad_mode"):
         keyboard.type(shifted_num[key])
     else:
         with keyboard.pressed(Key.shift):
@@ -145,69 +179,68 @@ def send_shifted_key(mode, key):
     return True
 
 
-def main():
-    logging.info("I'm in main!")
-    capslock = False
-    shift = False
-    mode = mode_list.index(config.default_mode)
+def main(mode, capslock, shift):
+    # to read the serial data from terminal: screen /dev/cu.usbserial-AM00GQIK 9600
+    ser = serial.Serial(config.serial_port, config.baud_rate, timeout=None)
+    logging.info("Listening on %s", ser.name)
 
     while True:
         output = ""
 
-        rotary_dial_number = read_port()
+        rotary_dial_number = read_port(ser)
         logging.debug("Rotary Dial number is %s", rotary_dial_number)
 
         if rotary_dial_number == mode_list.index("operation_mode"):
-            previous_mode = mode
-            mode = read_port()
-            logging.info("Switched to %s", mode_list[mode])
-            if mode == mode_list.index("operation_mode"):
-                mode = previous_mode
-                logging.info("Switched back to %s", mode_list[mode])
+            previous_mode = mode.value
+            mode.value = read_port(ser)
+            logging.info("Switched to %s", mode_list[mode.value])
+            if mode.value == mode_list.index("operation_mode"):
+                mode.value = previous_mode
+                logging.info("Switched back to %s", mode_list[mode.value])
                 output = mode_list.index("operation_mode")
             else:
-                if mode == mode_list.index("shift_mode"):
+                if mode.value == mode_list.index("shift_mode"):
                     logging.info("Setting shift to True")
-                    shift = True
-                    mode = previous_mode
-                    logging.info("Switched back to mode %s", mode_list[mode])
-                elif mode == mode_list.index("caps_lock_mode"):
+                    shift.value = True
+                    mode.value = previous_mode
+                    logging.info("Switched back to mode %s", mode_list[mode.value])
+                elif mode.value == mode_list.index("caps_lock_mode"):
                     logging.info("Toggling Caps lock")
-                    capslock = not capslock
-                    mode = previous_mode
-                    logging.info("Switched back to %s", mode_list[mode])
+                    capslock.value = not capslock.value
+                    mode.value = previous_mode
+                    logging.info("Switched back to %s", mode_list[mode.value])
                 continue
 
-        if mode == mode_list.index("numpad_mode"):
+        if mode.value == mode_list.index("numpad_mode"):
             output = str(rotary_dial_number)
-        elif mode == mode_list.index("alpha_mode"):
-            output = alpha(rotary_dial_number)
-        elif mode == mode_list.index("phrases_mode") and rotary_dial_number <= len(
-            config.phrases
-        ):
+        elif mode.value == mode_list.index("alpha_mode"):
+            output = alpha(ser, rotary_dial_number)
+        elif mode.value == mode_list.index(
+            "phrases_mode"
+        ) and rotary_dial_number <= len(config.phrases):
             output = config.phrases[rotary_dial_number - 1]
-        elif mode == mode_list.index("apps_mode") and rotary_dial_number <= len(
+        elif mode.value == mode_list.index("apps_mode") and rotary_dial_number <= len(
             config.apps
         ):
             os.system(f"open -a '{config.apps[rotary_dial_number - 1]}'")
             output = ""
-        elif mode == mode_list.index("alfred_mode"):
-            output = alfred(rotary_dial_number)
-        elif mode == mode_list.index("backspace_mode"):
+        elif mode.value == mode_list.index("alfred_mode"):
+            output = alfred(ser, rotary_dial_number)
+        elif mode.value == mode_list.index("backspace_mode"):
             backspace(rotary_dial_number)
-            mode = previous_mode
-            logging.info("Switched back to %s", mode_list[mode])
+            mode.value = previous_mode
+            logging.info("Switched back to %s", mode_list[mode.value])
             output = ""
 
         if len(output) < 1:
             logging.debug("Output is blank, not sending")
             continue
 
-        if mode == mode_list.index("alfred_mode"):
+        if mode.value == mode_list.index("alfred_mode"):
             send_Alfred_Hotkey(output)
-        elif shift or capslock:
+        elif shift.value or capslock.value:
             send_shifted_key(mode, output)
-            shift = False
+            shift.value = False
         else:
             logging.debug('Sending "%s" to keyboard', output)
             keyboard.type(output)
@@ -216,4 +249,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    QRD_process = Process(target=main, args=(mode, capslock, shift))
+    QRD_process.start()
+    app = QRDStatusBarApp()
+    app.run()
