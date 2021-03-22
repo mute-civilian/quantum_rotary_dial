@@ -172,7 +172,7 @@ def send_Alfred_Hotkey(key):
 def send_shifted_key(mode, key):
     logging.info('Sending shifted "%s" to keyboard', key)
     # NOTE: cannot shift numbers with this library, so pull from dictionary
-    if mode.value == mode_list.index("numpad_mode"):
+    if mode_list[mode.value] == "numpad_mode":
         keyboard.type(shifted_num[key])
     else:
         with keyboard.pressed(Key.shift):
@@ -195,39 +195,39 @@ def main(mode, capslock, shift):
             previous_mode = mode.value
             mode.value = read_port(ser)
             logging.info("Switched to %s", mode_list[mode.value])
-            if mode.value == mode_list.index("operation_mode"):
+            if mode_list[mode.value] == "operation_mode":
                 mode.value = previous_mode
                 logging.info("Switched back to %s", mode_list[mode.value])
                 output = mode_list.index("operation_mode")
             else:
-                if mode.value == mode_list.index("shift_mode"):
+                if mode_list[mode.value] == "shift_mode":
                     logging.info("Setting shift to True")
                     shift.value = True
                     mode.value = previous_mode
                     logging.info("Switched back to mode %s", mode_list[mode.value])
-                elif mode.value == mode_list.index("caps_lock_mode"):
+                elif mode_list[mode.value] == "caps_lock_mode":
                     logging.info("Toggling Caps lock")
                     capslock.value = not capslock.value
                     mode.value = previous_mode
                     logging.info("Switched back to %s", mode_list[mode.value])
                 continue
 
-        if mode.value == mode_list.index("numpad_mode"):
+        if mode_list[mode.value] == "numpad_mode":
             output = str(rotary_dial_number)
-        elif mode.value == mode_list.index("alpha_mode"):
+        elif mode_list[mode.value] == "alpha_mode":
             output = alpha(ser, rotary_dial_number)
-        elif mode.value == mode_list.index(
-            "phrases_mode"
-        ) and rotary_dial_number <= len(config.phrases):
+        elif mode_list[mode.value] == "phrases_mode" and rotary_dial_number <= len(
+            config.phrases
+        ):
             output = config.phrases[rotary_dial_number - 1]
-        elif mode.value == mode_list.index("apps_mode") and rotary_dial_number <= len(
+        elif mode_list[mode.value] == "apps_mode" and rotary_dial_number <= len(
             config.apps
         ):
             os.system(f"open -a '{config.apps[rotary_dial_number - 1]}'")
             output = ""
-        elif mode.value == mode_list.index("alfred_mode"):
+        elif mode_list[mode.value] == "alfred_mode":
             output = alfred(ser, rotary_dial_number)
-        elif mode.value == mode_list.index("backspace_mode"):
+        elif mode_list[mode.value] == "backspace_mode":
             backspace(rotary_dial_number)
             mode.value = previous_mode
             logging.info("Switched back to %s", mode_list[mode.value])
@@ -237,7 +237,7 @@ def main(mode, capslock, shift):
             logging.debug("Output is blank, not sending")
             continue
 
-        if mode.value == mode_list.index("alfred_mode"):
+        if mode_list[mode.value] == "alfred_mode":
             send_Alfred_Hotkey(output)
         elif shift.value or capslock.value:
             send_shifted_key(mode, output)
