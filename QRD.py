@@ -98,14 +98,14 @@ class QRDStatusBarApp(rumps.App):
 
     def set_up_menu(self):
         self.app.title = "QRD"
+        self.app.icon = "logo.png"
 
     def set_title(self, sender):
-        new_title = "QRD: "
         current_mode = mode_list[int(mode.value)]
         shift_flag = "Shifted " if shift.value else ""
         capslock_flag = "Capslocked " if capslock.value else ""
 
-        self.app.title = new_title + shift_flag + capslock_flag + current_mode
+        self.app.title = shift_flag + capslock_flag + current_mode
 
 
 @rumps.clicked("Quit")
