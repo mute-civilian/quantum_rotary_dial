@@ -34,9 +34,10 @@ Which breaks down to
 | 110  | Type Newline           |
 
 # Package Dependencies
-This app requires pynput. You can install it directly with 
+This app requires pynput and rumps. You can install it directly with 
 ```bash
 pip install pynput
+pip install rumps
 ```
 or with the requirements.txt file
 ```bash
@@ -92,6 +93,10 @@ The hotkeys are defined by the dictionary "alfred_codes" in [the config](config.
 Once the app is running, it'll listen to the serial port and react to the dialed input.
 
 It is important to note that "0" is treated as a special character. It is used to switch modes and acts as a signal to commit (see Alpha Mode or Alfred Mode below)
+
+Information on the current mode and if shift or caps lock are enabled are displayed in the status bar.
+
+Quitting the application can also be done from the status bar
 
 ## Switching Modes
 
