@@ -12,7 +12,7 @@ logging.basicConfig(
     filename=config.log_file,
     filemode="w",
     encoding="utf-8",
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
@@ -142,9 +142,10 @@ def backspace(num):
 def get_code(ser, num):
     logging.debug("getting code")
     code = str(num)
-    add = read_port(ser)
-    while add is not mode_list.index("operation_mode"):
-        code += str(add)
+    next_digit = read_port(ser)
+    while next_digit is not mode_list.index("operation_mode"):
+        code += str(next_digit)
+        next_digit = read_port(ser)
     logging.info("Code is %s", code)
     return code
 
