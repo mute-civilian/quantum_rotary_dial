@@ -98,7 +98,7 @@ class QRDStatusBarApp(rumps.App):
 
     def set_up_menu(self):
         self.app.title = "QRD"
-        self.app.icon = "app.icns"
+        self.app.icon = "images/app.icns"
 
     def set_title(self, sender):
         current_mode = mode_list[int(mode.value)]
