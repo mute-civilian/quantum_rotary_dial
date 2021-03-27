@@ -12,7 +12,7 @@ logging.basicConfig(
     filename=config.log_file,
     filemode="w",
     encoding="utf-8",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(levelname)s: %(message)s",
     datefmt="%m/%d/%Y %I:%M:%S %p",
 )
