@@ -1,7 +1,10 @@
+from pathlib import Path
+
+
 serial_port = "/dev/cu.usbserial-AM00GQIK"
 baud_rate = 9600
 
-log_file = "QRD.log"
+log_file = f"{Path.home()}/QRD.log"
 
 # NOTE: limited to 9 elements each in the below lists
 phrases = ["q", "z", "cool beans", "thanks!", "please take a look"]
